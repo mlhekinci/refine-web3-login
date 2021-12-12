@@ -1,17 +1,43 @@
 import { AuthProvider } from "@pankod/refine";
+import Web3 from "web3";
+import Web3Modal from "web3modal";
+
+import { getBalance } from "./utility";
 
 export const TOKEN_KEY = "refine-auth";
 
+const providerOptions = {};
+const web3Modal = new Web3Modal({
+  cacheProvider: true,
+  providerOptions,
+});
+
+let provider: any | null = null;
+
 export const authProvider: AuthProvider = {
-  login: async ({ username, password }) => {
-    if (username === "admin" && password === "admin") {
-      localStorage.setItem(TOKEN_KEY, username);
+  login: async () => {
+    if (window.ethereum) {
+      provider = await web3Modal.connect();
+      const web3 = new Web3(provider);
+      const accounts = await web3.eth.getAccounts();
+      localStorage.setItem(TOKEN_KEY, accounts[0]);
       return Promise.resolve();
+    } else {
+      return Promise.reject(
+        new Error(
+          "Not set ethereum wallet or invalid. You need to install Metamask"
+        )
+      );
     }
-    return Promise.reject(new Error("username: admin, password: admin"));
   },
-  logout: () => {
+  logout: async () => {
     localStorage.removeItem(TOKEN_KEY);
+    if (provider && provider.close) {
+      await provider.close;
+
+      provider = null;
+      await web3Modal.clearCachedProvider();
+    }
     return Promise.resolve();
   },
   checkError: () => Promise.resolve(),
@@ -25,13 +51,16 @@ export const authProvider: AuthProvider = {
   },
   getPermissions: () => Promise.resolve(),
   getUserIdentity: async () => {
-    const token = localStorage.getItem(TOKEN_KEY);
-    if (!token) {
+    const address = localStorage.getItem(TOKEN_KEY);
+    if (!address) {
       return Promise.reject();
     }
 
+    const balance = await getBalance(address);
+
     return Promise.resolve({
-      id: 1,
+      address,
+      balance,
     });
   },
 };

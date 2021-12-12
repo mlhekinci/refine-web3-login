@@ -5,6 +5,8 @@ import "@pankod/refine/dist/styles.min.css";
 import simpleRestDataProvider from "@pankod/refine-simple-rest";
 import { authProvider } from "authProvider";
 import { PostList, PostCreate, PostEdit, PostShow } from "pages/posts";
+import { Login } from "pages/login";
+import { DashboardPage } from "pages/dashboard";
 
 function App() {
   const API_URL = "https://api.fake-rest.refine.dev";
@@ -14,6 +16,8 @@ function App() {
       routerProvider={routerProvider}
       dataProvider={dataProvider}
       authProvider={authProvider}
+      LoginPage={Login}
+      DashboardPage={DashboardPage}
       resources={[
         {
           name: "posts",
